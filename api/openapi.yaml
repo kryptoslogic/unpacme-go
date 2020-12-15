@@ -1,0 +1,1572 @@
+openapi: 3.0.0
+info:
+  description: "\n# Introduction\nWelcome to the UNPACME API! All the malware unpacking\
+    \ and file analysis features that you are familiar with on the [unpac.me](https://www.unpac.me/)\
+    \ website are available through our API. You can easily integrate our unpacker\
+    \ into your malware analysis pipeline and begin unpacking at scale!\n\n\n# Authentication\n\
+    The public UNPACME API is publicly available and can be accessed without authentication.\n\
+    \nIn order to use the private UNPACME API you must sign up for an account with\
+    \ UNPACME. Once you have a valid user account you can view your personal API key\
+    \ in your user profile. \n\n<SecurityDefinitions />\n\n# Response Structure\n\
+    When interacting with the UNPACME API, if the request was correctly handled, a\
+    \ <b>200</b> HTTP status code will be returned. The body of the response will\
+    \ usually be a JSON object (except for file downloads).\n\n## Response Status\
+    \ Codes\n\nStatus Code  | Description | Notes\n------------- | ------------- |\
+    \ -\n200  | OK | The request was successful\n400  | Bad Request | The request\
+    \ was somehow incorrect. This can be caused by missing arguments or arguments\
+    \ with wrong values.\n401 | Unauthorized | The supplied credentials, if any, are\
+    \ not sufficient to access the resource\n403 | Forbidden | The account does not\
+    \ have enough privileges to make the request.\n404 | Not Found | The requested\
+    \ resource is not found\n429  | Too Many Requests | The request frequency has\
+    \ exceeded one of the account quotas (minute, daily or monthly). Monthly quotas\
+    \ are reset on the 1st of the month at 00:00 UTC.\n500 | Server Error | The server\
+    \ could not return the representation due to an internal server error\n\n\n##\
+    \ Error Response\n\nIf an error has occurred while handling the request an error\
+    \ status code will be returend along with a JSON error message with the following\
+    \ properties.\n\n\nProperty  | Description\n------------- | -------------\nError\
+    \  | The error type\nDescription  | A more informative message\n\n# Example Clients\n\
+    \nThe following clients can be used to interact with the UNPACME API directly\
+    \ and are provided as examples. These clients are community projects and are not\
+    \ maintained or developed by UNPACME. UNPACME makes no claim as to the safety\
+    \ of these clients, use at your own risk.\n\n  - [UnpacMe Client](https://github.com/larsborn/UnpacMeClient)\
+    \ (Python)\n  - [UnpacMe Library](https://github.com/R3MRUM/unpacme) (Python)\n\
+    \n<br>\n"
+  termsOfService: https://www.unpac.me/tos
+  title: UnpacMe
+  version: 1.0.0
+  x-logo:
+    url: /unpacme_logo.png
+    altText: UnpacMe logo
+servers:
+- description: UnpacMe API
+  url: https://api.unpac.me/api/v1
+tags:
+- description: Publicly accessible with no authentication
+  name: public
+- description: Unpacking and interacting with unpacked samples
+  name: unpacking
+- description: Sample feed access
+  name: feed
+- description: User operations
+  name: user
+paths:
+  /public/status/{unpack_id}:
+    get:
+      description: Returns a submission status
+      operationId: getPublicUnpackStatus
+      parameters:
+      - deprecated: false
+        description: ID of unpacking submission
+        explode: false
+        in: path
+        name: unpack_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnpackStatus'
+          description: successful operation
+      summary: Get unpack status by ID
+      tags:
+      - public
+  /public/results/{unpack_id}:
+    get:
+      description: Returns unpack results
+      operationId: getPublicResults
+      parameters:
+      - deprecated: false
+        description: ID of unpacking submission
+        explode: false
+        in: path
+        name: unpack_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnpackResults'
+          description: successful operation
+      summary: Get unpack results by ID
+      tags:
+      - public
+  /public/feed:
+    get:
+      description: Returns public feed of unpacked samples
+      operationId: getPublicFeed
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicFeed'
+          description: successful operation
+      summary: Get public feed
+      tags:
+      - public
+  /private/upload/:
+    post:
+      description: Queues sample for unpacking
+      operationId: postPrivateUpload
+      parameters:
+      - description: Mark sample as private (only available to PRO users)
+        explode: true
+        in: query
+        name: private
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      requestBody:
+        $ref: '#/components/requestBodies/inline_object'
+        content:
+          'multipart/form-data:':
+            schema:
+              properties:
+                file:
+                  format: binary
+                  type: string
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+          description: successful operation
+      security:
+      - api_key: []
+      summary: Submit sample for unpacking
+      tags:
+      - unpacking
+      x-codeSamples:
+      - lang: python
+        source: "import requests\ndef upload_file(file_name, file_data):\n    API_KEY\
+          \ = ''\n    API_KEY_STRING = 'Key %s' % API_KEY\n    auth_header={'Authorization':\
+          \ API_KEY_STRING}\n    files = {'file': (file_name, file_data)}\n    r =\
+          \ requests.post('https://api.unpac.me/api/v1/private/upload', files=files,\
+          \ headers=auth_header)\n    if not r.ok:\n        ## TODO: The upload failed\
+          \ add some error handling\n        return None\n    response = r.json()\n\
+          \    ## Return the upload ID which can be used to get\n    ## the upload\
+          \ status\n    return response['id'] \n    else:\n        ## TODO: The upload\
+          \ failed add some error handling\n        return None\n"
+  /private/status/{unpack_id}:
+    get:
+      description: Returns a submission status
+      operationId: getPrivateUnpackStatus
+      parameters:
+      - deprecated: false
+        description: ID of unpacking submission
+        explode: false
+        in: path
+        name: unpack_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnpackStatus'
+          description: successful operation
+      security:
+      - api_key: []
+      summary: Get unpack status by ID
+      tags:
+      - unpacking
+  /private/results/{unpack_id}:
+    get:
+      description: Returns unpack results
+      operationId: getPrivateResults
+      parameters:
+      - deprecated: false
+        description: ID of unpacking submission
+        explode: false
+        in: path
+        name: unpack_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnpackResults'
+          description: successful operation
+      security:
+      - api_key: []
+      summary: Get unpack results by ID
+      tags:
+      - unpacking
+  /private/history:
+    get:
+      description: Returns submission history
+      operationId: getPrivateHistory
+      parameters:
+      - description: Scroll history to cursor
+        explode: true
+        in: query
+        name: cursor
+        required: false
+        schema:
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/History'
+          description: successful operation
+      security:
+      - api_key: []
+      summary: Get history
+      tags:
+      - unpacking
+  /private/search/hash/{sample_hash}:
+    get:
+      description: Returns submission history
+      operationId: getPrivateSearchbyHash
+      parameters:
+      - deprecated: false
+        description: SHA256 hash of parent sample
+        explode: false
+        in: path
+        name: sample_hash
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResults'
+          description: successful operation
+      security:
+      - api_key: []
+      summary: Search for parent submission by hash
+      tags:
+      - unpacking
+  /private/download/{sample_hash}:
+    get:
+      description: Downloads sample binary
+      operationId: getPrivateDownload
+      parameters:
+      - deprecated: false
+        description: SHA256 hash of sample to download
+        explode: false
+        in: path
+        name: sample_hash
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/octet-stream:
+              schema:
+                format: binary
+                type: string
+          description: successful operation
+      security:
+      - api_key: []
+      summary: Download sample by hash
+      tags:
+      - unpacking
+      x-codeSamples:
+      - lang: python
+        source: |
+          import requests
+          def get_download(sample_hash):
+              API_KEY = ''
+              API_KEY_STRING = 'Key %s' % API_KEY
+              auth_header={'Authorization': API_KEY_STRING}
+              request_url = "https://api.unpac.me/api/v1/private/download/%s" % sample_hash
+              r = requests.get(request_url, headers=auth_header)
+              if not r.ok:
+                  ## TODO: The upload failed add some error handling
+                  return None
+              sample_data = r.content
+              return sample_data
+  /private/feed/unpacked:
+    get:
+      description: Returns full feed of unpacked samples
+      operationId: getPrivateFeed
+      parameters:
+      - description: Scroll feed to cursor
+        explode: true
+        in: query
+        name: cursor
+        required: false
+        schema:
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateFeed'
+          description: successful operation
+      security:
+      - api_key: []
+      summary: Get full unpacked sample feed
+      tags:
+      - feed
+  /private/feed/unpacked/yara:
+    get:
+      description: Returns list of all yara tags available for the feed
+      operationId: getPrivateFeedYaraTags
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateFeedYaraTags'
+          description: successful operation
+      security:
+      - api_key: []
+      summary: Get list of yara tags in feed
+      tags:
+      - feed
+  /private/feed/unpacked/yara/{yara_rule}:
+    get:
+      description: Returns full feed of unpacked samples filtered by the yara rule
+      operationId: getPrivateFeedYaraFiltered
+      parameters:
+      - deprecated: false
+        description: Yara rule name used to filter feed
+        explode: false
+        in: path
+        name: yara_rule
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateFeedFiltered'
+          description: successful operation
+      security:
+      - api_key: []
+      summary: Get full unpacked sample feed filtered by yara rule
+      tags:
+      - feed
+  /private/user/access:
+    get:
+      description: Returns user settings
+      operationId: getPrivateUserAccess
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAccess'
+          description: successful operation
+      summary: Get user settings
+      tags:
+      - user
+  /private/user/malpedia:
+    delete:
+      description: Removes Malpedia authentication and deletes Malpedia token
+      operationId: deletePrivateUserMalpedia
+      responses:
+        default:
+          description: successful operation
+      security:
+      - api_key: []
+      summary: Remove Malpedia authentication
+      tags:
+      - user
+    get:
+      description: Returns user Malpedia info
+      operationId: getPrivateUserMalpedia
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_1'
+          description: successful operation
+      security:
+      - api_key: []
+      summary: Get user Malpedia info
+      tags:
+      - user
+    post:
+      description: Authenticate user to Malpedia using API token
+      operationId: postPrivateUserMalpedia
+      requestBody:
+        $ref: '#/components/requestBodies/inline_object_1'
+        content:
+          application/json:
+            schema:
+              properties:
+                token:
+                  description: Malpedia API token
+                  type: string
+              type: object
+      responses:
+        default:
+          description: successful operation
+      security:
+      - api_key: []
+      summary: Authenticate user to Malpedia
+      tags:
+      - user
+components:
+  requestBodies:
+    inline_object_1:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/inline_object_1'
+    inline_object:
+      content:
+        'multipart/form-data:':
+          schema:
+            $ref: '#/components/schemas/inline_object'
+  schemas:
+    status:
+      allOf:
+      - description: "Unpacking submission state order: \n * `validating` - Validating\
+          \ the uploaded file. The results list will not be populated at this poin\n\
+          \ * `queued` - The file has been queued for analysis. Depending on your\
+          \ account status analysis may be delayed during heavy usage. The results\
+          \ list will not be populated at this point.\n * `analyzing` - The file is\
+          \ being analyzed before the unpacking processor is selected. The results\
+          \ list will not be populated at this point.\n * `unpack_pending` - The file\
+          \ has been analyzed and an unpacker selected. The file is now queued for\
+          \ unpacking. Depending on your account status unpacking may be delayed during\
+          \ heavy usage. The results list will contain the analysis results for the\
+          \ submitting file but it will not contain any unpacked files.\n * `unpacking`\
+          \ - The file is now being unpacked. The results list will contain the analysis\
+          \ results for the submitting file but it will not contain any unpacked files.\n\
+          \ * `unpack-requeue` - Unpacking has been delayed due to heavy load. The\
+          \ results list will contain the analysis results for the submitting file\
+          \ but it will not contain any unpacked files.\n * `unpacked` -   The file\
+          \ has been unpacked. The results list will contain the analysis results\
+          \ for the submitting file but it will not contain any unpacked files.\n\
+          \ * `post_analysis` -   The file has been unpacked and the unpacked files\
+          \ have been submitted for analysis. The results list will contain the analysis\
+          \ results for the submitting file and may begin to contain results for some\
+          \ of the unpacked files.\n * `complete` -   The unpacking and analysis process\
+          \ has completed. The results list will contain the analysis results for\
+          \ the submitting file and all unpacked files.\n * `fail` -   The unpacking\
+          \ and analysis process has completed with errors. The results list may contain\
+          \ data but there is no guarantee.\n"
+        enum:
+        - validating
+        - queued
+        - analyzing
+        - unpack_pending
+        - unpacking
+        - unpack-requeue
+        - unpacked
+        - post_analysis
+        - complete
+        - fail
+        type: string
+      description: Job status
+    section:
+      allOf:
+      - $ref: '#/components/schemas/section_allOf'
+      description: PE section
+    detectit_entity:
+      allOf:
+      - $ref: '#/components/schemas/detectit_entity_allOf'
+      description: DetectIt Entity
+    malware_id:
+      allOf:
+      - $ref: '#/components/schemas/malware_id_allOf'
+      description: Malware ID match
+    malware_id_short:
+      allOf:
+      - $ref: '#/components/schemas/malware_id_short_allOf'
+      description: Malware ID match high level info
+    rich_header:
+      allOf:
+      - $ref: '#/components/schemas/rich_header_allOf'
+      description: PE rich header
+    resource:
+      allOf:
+      - $ref: '#/components/schemas/resource_allOf'
+      description: PE file resource
+    resource_entry:
+      properties:
+        entries:
+          items:
+            $ref: '#/components/schemas/resource'
+          type: array
+        name:
+          description: Resource name
+          type: string
+      type: object
+    resource_entity:
+      properties:
+        entries:
+          items:
+            $ref: '#/components/schemas/resource_entry'
+          type: array
+        type:
+          description: Resource type
+          type: string
+      type: object
+    deepmatch_entity:
+      allOf:
+      - $ref: '#/components/schemas/deepmatch_entity_allOf'
+      description: DeepMatch entity
+    export:
+      allOf:
+      - $ref: '#/components/schemas/export_allOf'
+      description: API export
+    function:
+      allOf:
+      - $ref: '#/components/schemas/function_allOf'
+      description: API function
+    import_entity:
+      allOf:
+      - $ref: '#/components/schemas/import_entity_allOf'
+      description: PE file import entity
+    result:
+      allOf:
+      - $ref: '#/components/schemas/result_allOf'
+      description: Unpack result
+    feed_entity:
+      example:
+        malwareid:
+        - null
+        - null
+        sha256: sha256
+        children: 0
+        created: 6.0274563
+        autoit: true
+        id: id
+        malwareid_restricted:
+        - null
+        - null
+        deepmatch:
+        - null
+        - null
+        downloader: true
+        status: status
+      properties:
+        autoit:
+          description: AutoIt detected
+          type: boolean
+        children:
+          description: Number of unpacked children
+          type: integer
+        created:
+          description: Submission timestamp
+          format: float
+          type: number
+        deepmatch:
+          description: DeepMatch matches
+          items:
+            $ref: '#/components/schemas/deepmatch_entity'
+          type: array
+        downloader:
+          description: Downloader detected
+          type: boolean
+        id:
+          description: Unpacking submission ID
+          type: string
+        malwareid:
+          items:
+            $ref: '#/components/schemas/malware_id_short'
+          type: array
+        malwareid_restricted:
+          items:
+            $ref: '#/components/schemas/malware_id_short'
+          type: array
+        sha256:
+          description: Parent submission SHA256
+          type: string
+        status:
+          description: Unpacking status
+          type: string
+      type: object
+    history_entity:
+      example:
+        private: true
+        malwareid:
+        - null
+        - null
+        sha256: sha256
+        children: 6
+        created: 1.4658129
+        autoit: true
+        id: id
+        malwareid_restricted:
+        - null
+        - null
+        deepmatch:
+        - null
+        - null
+        downloader: true
+        status: status
+      properties:
+        autoit:
+          description: AutoIt detected
+          type: boolean
+        children:
+          description: Number of unpacked children
+          type: integer
+        created:
+          description: Submission timestamp
+          format: float
+          type: number
+        deepmatch:
+          description: DeepMatch matches
+          items:
+            $ref: '#/components/schemas/deepmatch_entity'
+          type: array
+        downloader:
+          description: Downloader detected
+          type: boolean
+        id:
+          description: Unpacking submission ID
+          type: string
+        malwareid:
+          items:
+            $ref: '#/components/schemas/malware_id_short'
+          type: array
+        malwareid_restricted:
+          items:
+            $ref: '#/components/schemas/malware_id_short'
+          type: array
+        sha256:
+          description: Parent submission SHA256
+          type: string
+        status:
+          description: Unpacking status
+          type: string
+        private:
+          description: Sample is private
+          type: boolean
+      type: object
+    search_entity:
+      example:
+        submission_id: submission_id
+        metadata: metadata
+        sha256: sha256
+        children:
+        - children
+        - children
+        created: 0.8008282
+        status: status
+      properties:
+        created:
+          description: Submission timestamp
+          format: float
+          type: number
+        submission_id:
+          description: Unpacking submission ID
+          type: string
+        children:
+          items:
+            description: SHA256 hash of unpacked child
+            type: string
+          type: array
+        sha256:
+          description: Parent submission SHA256
+          type: string
+        status:
+          description: Unpacking status
+          type: string
+        metadata:
+          description: Sample metadata
+          type: string
+      type: object
+    private_feed_entity:
+      example:
+        malwareid:
+        - null
+        - null
+        submission_sha256: submission_sha256
+        children:
+          key:
+            malwareid:
+            - malwareid
+            - malwareid
+            autoit: true
+            downloader: true
+        child_count: 6
+        created: 1.4658129
+        autoit: true
+        id: id
+        downloader: true
+      properties:
+        autoit:
+          description: AutoIt detected
+          type: boolean
+        child_count:
+          description: Number of unpacked children
+          type: integer
+        children:
+          additionalProperties:
+            $ref: '#/components/schemas/private_feed_entity_children'
+          type: object
+        created:
+          description: Submission timestamp
+          format: float
+          type: number
+        downloader:
+          description: Downloader detected
+          type: boolean
+        id:
+          description: Unpacking submission ID
+          type: string
+        malwareid:
+          items:
+            $ref: '#/components/schemas/malware_id_short'
+          type: array
+        submission_sha256:
+          description: Parent submission SHA256
+          type: string
+      type: object
+    PrivateFeedYaraTags:
+      description: Private feed yara tags
+      example:
+        malwareid:
+          key: 6
+        count: 0
+      properties:
+        count:
+          description: Numer of tags available
+          type: integer
+        malwareid:
+          additionalProperties:
+            description: Tag instance count
+            type: integer
+          description: Yara tag names
+          type: object
+      type: object
+    PrivateFeedFiltered:
+      description: Private feed filtered by tag
+      example:
+        cursor: 0
+        tag_value: tag_value
+        tag_type: tag_type
+        submissions:
+        - malwareid:
+          - null
+          - null
+          submission_sha256: submission_sha256
+          children:
+            key:
+              malwareid:
+              - malwareid
+              - malwareid
+              autoit: true
+              downloader: true
+          child_count: 6
+          created: 1.4658129
+          autoit: true
+          id: id
+          downloader: true
+        - malwareid:
+          - null
+          - null
+          submission_sha256: submission_sha256
+          children:
+            key:
+              malwareid:
+              - malwareid
+              - malwareid
+              autoit: true
+              downloader: true
+          child_count: 6
+          created: 1.4658129
+          autoit: true
+          id: id
+          downloader: true
+        submission_count: ""
+      properties:
+        cursor:
+          description: Cursor used to scroll to page of feed results
+          type: integer
+        submission_count:
+          description: Number of submissions in feed page
+        tag_type:
+          description: Type of tag used to filter feed
+          type: string
+        tag_value:
+          description: Tag label
+          type: string
+        submissions:
+          items:
+            $ref: '#/components/schemas/private_feed_entity'
+          type: array
+      type: object
+    PrivateFeed:
+      description: Private feed
+      example:
+        cursor: 0
+        submissions:
+        - malwareid:
+          - null
+          - null
+          submission_sha256: submission_sha256
+          children:
+            key:
+              malwareid:
+              - malwareid
+              - malwareid
+              autoit: true
+              downloader: true
+          child_count: 6
+          created: 1.4658129
+          autoit: true
+          id: id
+          downloader: true
+        - malwareid:
+          - null
+          - null
+          submission_sha256: submission_sha256
+          children:
+            key:
+              malwareid:
+              - malwareid
+              - malwareid
+              autoit: true
+              downloader: true
+          child_count: 6
+          created: 1.4658129
+          autoit: true
+          id: id
+          downloader: true
+        submission_count: ""
+      properties:
+        cursor:
+          description: Cursor used to scroll to page of feed results
+          type: integer
+        submission_count:
+          description: Number of submissions in feed page
+        submissions:
+          items:
+            $ref: '#/components/schemas/private_feed_entity'
+          type: array
+      type: object
+    History:
+      description: Public feed
+      example:
+        cursor: 0
+        results:
+        - private: true
+          malwareid:
+          - null
+          - null
+          sha256: sha256
+          children: 6
+          created: 1.4658129
+          autoit: true
+          id: id
+          malwareid_restricted:
+          - null
+          - null
+          deepmatch:
+          - null
+          - null
+          downloader: true
+          status: status
+        - private: true
+          malwareid:
+          - null
+          - null
+          sha256: sha256
+          children: 6
+          created: 1.4658129
+          autoit: true
+          id: id
+          malwareid_restricted:
+          - null
+          - null
+          deepmatch:
+          - null
+          - null
+          downloader: true
+          status: status
+      properties:
+        cursor:
+          description: Cursor used to scroll to page of results
+          type: integer
+        results:
+          items:
+            $ref: '#/components/schemas/history_entity'
+          type: array
+      type: object
+    PublicFeed:
+      description: Public feed
+      example:
+        results:
+        - malwareid:
+          - null
+          - null
+          sha256: sha256
+          children: 0
+          created: 6.0274563
+          autoit: true
+          id: id
+          malwareid_restricted:
+          - null
+          - null
+          deepmatch:
+          - null
+          - null
+          downloader: true
+          status: status
+        - malwareid:
+          - null
+          - null
+          sha256: sha256
+          children: 0
+          created: 6.0274563
+          autoit: true
+          id: id
+          malwareid_restricted:
+          - null
+          - null
+          deepmatch:
+          - null
+          - null
+          downloader: true
+          status: status
+      properties:
+        results:
+          items:
+            $ref: '#/components/schemas/feed_entity'
+          type: array
+      type: object
+    SearchResults:
+      description: Search results
+      example:
+        results:
+        - submission_id: submission_id
+          metadata: metadata
+          sha256: sha256
+          children:
+          - children
+          - children
+          created: 0.8008282
+          status: status
+        - submission_id: submission_id
+          metadata: metadata
+          sha256: sha256
+          children:
+          - children
+          - children
+          created: 0.8008282
+          status: status
+      properties:
+        results:
+          items:
+            $ref: '#/components/schemas/search_entity'
+          type: array
+      type: object
+    UnpackStatus:
+      allOf:
+      - $ref: '#/components/schemas/UnpackStatus_allOf'
+      description: Unpack submission status
+    UnpackResults:
+      allOf:
+      - $ref: '#/components/schemas/UnpackResults_allOf'
+      description: Unpack submission results
+    UserAccess:
+      allOf:
+      - $ref: '#/components/schemas/UserAccess_allOf'
+      description: User settings
+    inline_object:
+      properties:
+        file:
+          format: binary
+          type: string
+      type: object
+    inline_response_200:
+      example:
+        id: id
+      properties:
+        id:
+          description: Unpack submission ID
+          type: string
+      type: object
+    inline_response_200_1:
+      example:
+        malpedia_authorized: true
+        malpedia_token: malpedia_token
+      properties:
+        malpedia_authorized:
+          description: Is user authorized to use Malpedia API
+          type: boolean
+        malpedia_token:
+          description: Malpedia API token
+          type: string
+      type: object
+    inline_object_1:
+      properties:
+        token:
+          description: Malpedia API token
+          type: string
+      type: object
+    section_allOf:
+      properties:
+        Characteristics:
+          description: Section characteristics
+          type: integer
+        Entropy:
+          description: Section entropy
+          format: float
+          type: number
+        MD5:
+          description: MD5 of section data
+          type: string
+        Name:
+          description: Section name
+          type: string
+        Name_Hex:
+          description: Hex encoded section name
+          type: string
+        NumberOfLinenumbers:
+          description: Number of line numbers
+          type: integer
+        NumberOfRelocations:
+          description: Number of relocations
+          type: integer
+        PointerToLinenumbers:
+          description: Pointer to line numbers
+          type: integer
+        PointerToRawData:
+          description: Pointer to raw data
+          type: integer
+        PointerToRelocations:
+          description: Pointer to relocations
+          type: integer
+        SHA1:
+          description: SHA1 of section data
+          type: string
+        SHA256:
+          description: SHA256 of section data
+          type: string
+        SizeOfRawData:
+          description: Size of raw data
+          type: integer
+        VirtualAddress:
+          description: Virtual address of section
+          type: integer
+        VirtualSize:
+          description: Virtual size of section
+          type: integer
+      required:
+      - Characteristics
+      - Entropy
+      - MD5
+      - Name
+      - Name_Hex
+      - NumberOfLinenumbers
+      - NumberOfRelocations
+      - PointerToLinenumbers
+      - PointerToRawData
+      - PointerToRelocations
+      - SHA1
+      - SHA256
+      - SizeOfRawData
+      - VirtualAddress
+      - VirtualSize
+      type: object
+    detectit_entity_allOf:
+      properties:
+        name:
+          description: Detection name
+          type: string
+        options:
+          description: Detection options
+          type: string
+        string:
+          description: Detection description
+          type: string
+        type:
+          description: Detection type
+          type: string
+        version:
+          description: DetectIt version
+          type: string
+      required:
+      - name
+      - options
+      - string
+      - type
+      - version
+      type: object
+    malware_id_allOf:
+      properties:
+        confidence:
+          description: Match confidence
+          type: string
+        name:
+          description: Match name
+          type: string
+        reference:
+          description: Match reference
+          type: string
+        source:
+          description: Match source
+          type: string
+      required:
+      - confidence
+      - name
+      - reference
+      - source
+      type: object
+    malware_id_short_allOf:
+      properties:
+        match:
+          description: Match name
+          type: string
+        type:
+          description: Match source
+          type: string
+      required:
+      - match
+      - type
+      type: object
+    rich_header_allOf:
+      properties:
+        Build:
+          description: Build
+          type: string
+        BuildId:
+          description: Build ID
+          type: integer
+        Count:
+          description: Count
+          type: integer
+        ProdId:
+          description: Product ID
+          type: integer
+        Product:
+          description: Product
+          type: string
+      required:
+      - Build
+      - BuildId
+      - Count
+      - ProdId
+      - Product
+      type: object
+    resource_allOf:
+      properties:
+        codepage:
+          description: Codepage
+          type: integer
+        lang:
+          description: Language
+          type: string
+        magic_type:
+          description: Resource type
+          type: string
+        offset:
+          description: Resource offset
+          type: integer
+        size:
+          description: Resource size
+          type: integer
+        sublang:
+          description: Sub-Language
+          type: string
+      required:
+      - codepage
+      - lang
+      - magic_type
+      - offset
+      - size
+      - sublang
+      type: object
+    deepmatch_entity_allOf:
+      properties:
+        average:
+          description: Percent average match
+          format: float
+          type: number
+        label:
+          description: Match name
+          type: string
+      required:
+      - average
+      - label
+      type: object
+    export_allOf:
+      properties:
+        address:
+          description: Export address
+          type: integer
+        name:
+          description: Export name
+          type: string
+        ordinal:
+          description: Export ordinal
+          type: integer
+      required:
+      - address
+      - name
+      - ordinal
+      type: object
+    function_allOf:
+      properties:
+        import_by_ordinal:
+          description: API imported by ordinal
+          type: boolean
+        name:
+          description: API name
+          type: string
+      required:
+      - import_by_ordinal
+      - name
+      type: object
+    import_entity_allOf:
+      properties:
+        library:
+          description: Library name
+          type: string
+        functions:
+          items:
+            $ref: '#/components/schemas/function'
+          type: array
+      required:
+      - functions
+      - library
+      type: object
+    result_allOf_hashes:
+      properties:
+        md5:
+          description: MD5 hash of sample
+          type: string
+        sha1:
+          description: SHA1 hash of sample
+          type: string
+        sha256:
+          description: SHA256 hash of sample
+          type: string
+      type: object
+    result_allOf_analysis_exports:
+      properties:
+        count:
+          description: Export count
+          type: integer
+        functions:
+          items:
+            $ref: '#/components/schemas/export'
+          type: array
+      type: object
+    result_allOf_analysis_imports:
+      properties:
+        count:
+          description: Import count
+          type: integer
+        entities:
+          items:
+            $ref: '#/components/schemas/import_entity'
+          type: array
+      type: object
+    result_allOf_analysis_metadata_VersionInfo_StringInfo:
+      properties:
+        CompanyName:
+          description: Company name
+          type: string
+        FileDescription:
+          description: File description
+          type: string
+        FileVersion:
+          description: File version
+          type: string
+        LegalCopyright:
+          description: Legal copyright
+          type: string
+        OriginalFilename:
+          description: Original file name
+          type: string
+        ProductName:
+          description: Product name
+          type: string
+        ProductVersion:
+          description: Product version
+          type: string
+      type: object
+    result_allOf_analysis_metadata_VersionInfo_VarInfo:
+      properties:
+        LangID:
+          description: Language ID
+          type: string
+        Translation:
+          description: Translation
+          type: string
+        charsetID:
+          description: Character set ID
+          type: string
+      type: object
+    result_allOf_analysis_metadata_VersionInfo:
+      properties:
+        StringInfo:
+          $ref: '#/components/schemas/result_allOf_analysis_metadata_VersionInfo_StringInfo'
+        VarInfo:
+          $ref: '#/components/schemas/result_allOf_analysis_metadata_VersionInfo_VarInfo'
+      type: object
+    result_allOf_analysis_metadata:
+      properties:
+        Characteristics:
+          items:
+            description: PE file characteristics
+            type: string
+          type: array
+        Checksum:
+          description: PE file checksum
+          type: integer
+        Compile Time:
+          description: PE file compile time
+          type: string
+        Contains Compressed Data:
+          description: PE file contains compressed data
+          type: boolean
+        EP Bytes:
+          description: Entry point first 16 bytes
+          type: string
+        Entry Point:
+          description: PE file entry point
+          type: integer
+        Image Base:
+          description: PE file image base
+          type: integer
+        Linker Version:
+          description: PE file linker version
+          type: string
+        PDB Path:
+          description: PE file program database file path
+          type: string
+        Sections:
+          description: Number of sections
+          type: integer
+        Signature:
+          description: PE file signature
+          type: integer
+        Size:
+          description: PE file size
+          type: integer
+        Subsystem:
+          description: PE file subsystem
+          type: string
+        Type:
+          description: PE file type
+          type: string
+        VersionInfo:
+          $ref: '#/components/schemas/result_allOf_analysis_metadata_VersionInfo'
+      type: object
+    result_allOf_analysis_rich_headers:
+      properties:
+        Checksum:
+          description: Rich header checksum
+          type: string
+        Entries:
+          items:
+            $ref: '#/components/schemas/rich_header'
+          type: array
+      type: object
+    result_allOf_analysis:
+      properties:
+        exports:
+          $ref: '#/components/schemas/result_allOf_analysis_exports'
+        imports:
+          $ref: '#/components/schemas/result_allOf_analysis_imports'
+        metadata:
+          $ref: '#/components/schemas/result_allOf_analysis_metadata'
+        resources:
+          items:
+            $ref: '#/components/schemas/resource_entity'
+          type: array
+        rich_headers:
+          $ref: '#/components/schemas/result_allOf_analysis_rich_headers'
+        sections:
+          items:
+            $ref: '#/components/schemas/section'
+          type: array
+      type: object
+    result_allOf_strings:
+      properties:
+        ascii:
+          items:
+            description: Ascii string
+            type: string
+          type: array
+        stack:
+          items:
+            description: Stack string
+            type: string
+          type: array
+        wide:
+          items:
+            description: Wide string
+            type: string
+          type: array
+      type: object
+    result_allOf:
+      properties:
+        hashes:
+          $ref: '#/components/schemas/result_allOf_hashes'
+        analysis:
+          $ref: '#/components/schemas/result_allOf_analysis'
+        deepmatch:
+          items:
+            $ref: '#/components/schemas/deepmatch_entity'
+          type: array
+        detectit:
+          items:
+            $ref: '#/components/schemas/detectit_entity'
+          type: array
+        malware_id:
+          items:
+            $ref: '#/components/schemas/malware_id'
+          type: array
+        malware_id_restricted:
+          items:
+            $ref: '#/components/schemas/malware_id'
+          type: array
+        strings:
+          $ref: '#/components/schemas/result_allOf_strings'
+        urls:
+          items:
+            description: URL string
+            type: string
+          type: array
+      required:
+      - analysis
+      - hashes
+      type: object
+    private_feed_entity_children:
+      description: Child SHA256 hash
+      example:
+        malwareid:
+        - malwareid
+        - malwareid
+        autoit: true
+        downloader: true
+      properties:
+        autoit:
+          description: AutoIt detected
+          type: boolean
+        downloader:
+          description: Downloader detected
+          type: boolean
+        malwareid:
+          items:
+            description: Malwareid match
+            type: string
+          type: array
+      type: object
+    UnpackStatus_allOf:
+      properties:
+        id:
+          description: Unpack submission ID
+          type: string
+        status:
+          $ref: '#/components/schemas/status'
+      required:
+      - id
+      - status
+      type: object
+    UnpackResults_allOf:
+      properties:
+        id:
+          description: Unpack submission ID
+          type: string
+        status:
+          $ref: '#/components/schemas/status'
+        sha256:
+          description: SHA256 hash of the submitted file
+          type: string
+        time:
+          description: Timestamp of original submission (in UTC)
+          format: float
+          type: number
+        private:
+          description: Sample is private
+          type: boolean
+        user_submitted:
+          description: Sample was submitted by current user
+          type: boolean
+        results:
+          description: Array of results from submission, including the parent
+          items:
+            $ref: '#/components/schemas/result'
+          type: array
+      required:
+      - id
+      - results
+      - sha256
+      - status
+      - time
+      type: object
+    UserAccess_allOf:
+      properties:
+        api_key:
+          description: API key
+          type: string
+        feed_download_url:
+          description: Sample feed direct download URL (only available to Feed subscribers)
+          type: string
+        feed_password:
+          description: Sample feed direct download password (only available to Feed
+            subscribers)
+          type: string
+        feed_username:
+          description: Sample feed direct download username (only available to Feed
+            subscribers)
+          type: string
+        month_limit:
+          description: Monthly upload limit
+          type: integer
+        month_submissions:
+          description: Number of submissions for the current month
+          type: integer
+        month_submissions_private:
+          description: Number of private submissions for the current month
+          type: integer
+        roles:
+          description: Service access roles
+          items:
+            type: string
+          type: array
+        total_submissions:
+          description: Lifetime total number of submissions
+          type: integer
+      required:
+      - api_key
+      - month_limit
+      - month_submissions
+      - roles
+      - total_submissions
+      type: object
+  securitySchemes:
+    api_key:
+      description: |
+        The private UNPACME API expects the API key to be included in all requests in the request header using the following header name. `Authorization: Key your_api_key`
+      in: header
+      name: Authorization
+      type: apiKey
