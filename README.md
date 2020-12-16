@@ -54,6 +54,10 @@ Install the following dependencies:
 go get github.com/stretchr/testify/assert
 go get golang.org/x/oauth2
 go get golang.org/x/net/context
+```
+
+Install the module:
+```
 go get github.com/kryptoslogic/unpacme-go
 ```
 
