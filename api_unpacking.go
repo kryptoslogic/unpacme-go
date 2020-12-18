@@ -1,7 +1,7 @@
 /*
  * UnpacMe
  *
- *  # Introduction Welcome to the UNPACME API! All the malware unpacking and file analysis features that you are familiar with on the [unpac.me](https://www.unpac.me/) website are available through our API. You can easily integrate our unpacker into your malware analysis pipeline and begin unpacking at scale!   # Authentication The public UNPACME API is publicly available and can be accessed without authentication.  In order to use the private UNPACME API you must sign up for an account with UNPACME. Once you have a valid user account you can view your personal API key in your user profile.   <SecurityDefinitions />  # Response Structure When interacting with the UNPACME API, if the request was correctly handled, a <b>200</b> HTTP status code will be returned. The body of the response will usually be a JSON object (except for file downloads).  ## Response Status Codes  Status Code  | Description | Notes ------------- | ------------- | - 200  | OK | The request was successful 400  | Bad Request | The request was somehow incorrect. This can be caused by missing arguments or arguments with wrong values. 401 | Unauthorized | The supplied credentials, if any, are not sufficient to access the resource 403 | Forbidden | The account does not have enough privileges to make the request. 404 | Not Found | The requested resource is not found 429  | Too Many Requests | The request frequency has exceeded one of the account quotas (minute, daily or monthly). Monthly quotas are reset on the 1st of the month at 00:00 UTC. 500 | Server Error | The server could not return the representation due to an internal server error   ## Error Response  If an error has occurred while handling the request an error status code will be returend along with a JSON error message with the following properties.   Property  | Description ------------- | ------------- Error  | The error type Description  | A more informative message  # Example Clients  The following clients can be used to interact with the UNPACME API directly and are provided as examples. These clients are community projects and are not maintained or developed by UNPACME. UNPACME makes no claim as to the safety of these clients, use at your own risk.    - [UnpacMe Client](https://github.com/larsborn/UnpacMeClient) (Python)   - [UnpacMe Library](https://github.com/R3MRUM/unpacme) (Python)  <br> 
+ *  # Introduction Welcome to the UNPACME API! All the malware unpacking and file analysis features that you are familiar with on the [unpac.me](https://www.unpac.me/) website are available through our API. You can easily integrate our unpacker into your malware analysis pipeline and begin unpacking at scale!   # Authentication The public UNPACME API is publicly available and can be accessed without authentication.  In order to use the private UNPACME API you must sign up for an account with UNPACME. Once you have a valid user account you can view your personal API key in your user profile.   <SecurityDefinitions />  # Response Structure When interacting with the UNPACME API, if the request was correctly handled, a <b>200</b> HTTP status code will be returned. The body of the response will usually be a JSON object (except for file downloads).  ## Response Status Codes  Status Code  | Description | Notes ------------- | ------------- | - 200  | OK | The request was successful 400  | Bad Request | The request was somehow incorrect. This can be caused by missing arguments or arguments with wrong values. 401 | Unauthorized | The supplied credentials, if any, are not sufficient to access the resource 403 | Forbidden | The account does not have enough privileges to make the request. 404 | Not Found | The requested resource is not found 429  | Too Many Requests | The request frequency has exceeded one of the account quotas (minute, daily or monthly). Monthly quotas are reset on the 1st of the month at 00:00 UTC. 500 | Server Error | The server could not return the representation due to an internal server error   ## Error Response  If an error has occurred while handling the request an error status code will be returend along with a JSON error message with the following properties.   Property  | Description ------------- | ------------- Error  | The error type Description  | A more informative message  # Example Clients  The following clients can be used to interact with the UNPACME API directly and are provided as examples. These clients are community projects and are not maintained or developed by UNPACME. UNPACME makes no claim as to the safety of these clients, use at your own risk.    - [UnpacMe Client](https://github.com/larsborn/UnpacMeClient) (Python)   - [UnpacMe Library](https://github.com/R3MRUM/unpacme) (Python)  <br>
  *
  * API version: 1.0.0
  */
@@ -15,8 +15,8 @@ import (
 	_ioutil "io/ioutil"
 	_nethttp "net/http"
 	_neturl "net/url"
-	"strings"
 	"os"
+	"strings"
 )
 
 // Linger please
@@ -28,13 +28,12 @@ var (
 type UnpackingApiService service
 
 type ApiGetPrivateDownloadRequest struct {
-	ctx _context.Context
+	ctx        _context.Context
 	ApiService *UnpackingApiService
 	sampleHash string
 }
 
-
-func (r ApiGetPrivateDownloadRequest) Execute() (*os.File, *_nethttp.Response, error) {
+func (r ApiGetPrivateDownloadRequest) Execute() ([]byte, *_nethttp.Response, error) {
 	return r.ApiService.GetPrivateDownloadExecute(r)
 }
 
@@ -48,7 +47,7 @@ func (r ApiGetPrivateDownloadRequest) Execute() (*os.File, *_nethttp.Response, e
 func (a *UnpackingApiService) GetPrivateDownload(ctx _context.Context, sampleHash string) ApiGetPrivateDownloadRequest {
 	return ApiGetPrivateDownloadRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 		sampleHash: sampleHash,
 	}
 }
@@ -57,14 +56,14 @@ func (a *UnpackingApiService) GetPrivateDownload(ctx _context.Context, sampleHas
  * Execute executes the request
  * @return *os.File
  */
-func (a *UnpackingApiService) GetPrivateDownloadExecute(r ApiGetPrivateDownloadRequest) (*os.File, *_nethttp.Response, error) {
+func (a *UnpackingApiService) GetPrivateDownloadExecute(r ApiGetPrivateDownloadRequest) ([]byte, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  *os.File
+		localVarReturnValue  []byte
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UnpackingApiService.GetPrivateDownload")
@@ -143,13 +142,16 @@ func (a *UnpackingApiService) GetPrivateDownloadExecute(r ApiGetPrivateDownloadR
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarReturnValue, localVarHTTPResponse, nil
+	// @davido, filthy hack to return localVarBody which is a []byte (the bin we want)
+	// (see mods to to client.decode())
+	// previously it returned a nil *os.File (localVarReturnValue). client.decode() has no support for application/octet-stream.
+	return localVarBody, localVarHTTPResponse, nil
 }
 
 type ApiGetPrivateHistoryRequest struct {
-	ctx _context.Context
+	ctx        _context.Context
 	ApiService *UnpackingApiService
-	cursor *int32
+	cursor     *int32
 }
 
 func (r ApiGetPrivateHistoryRequest) Cursor(cursor int32) ApiGetPrivateHistoryRequest {
@@ -170,7 +172,7 @@ func (r ApiGetPrivateHistoryRequest) Execute() (History, *_nethttp.Response, err
 func (a *UnpackingApiService) GetPrivateHistory(ctx _context.Context) ApiGetPrivateHistoryRequest {
 	return ApiGetPrivateHistoryRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
@@ -270,11 +272,10 @@ func (a *UnpackingApiService) GetPrivateHistoryExecute(r ApiGetPrivateHistoryReq
 }
 
 type ApiGetPrivateResultsRequest struct {
-	ctx _context.Context
+	ctx        _context.Context
 	ApiService *UnpackingApiService
-	unpackId string
+	unpackId   string
 }
-
 
 func (r ApiGetPrivateResultsRequest) Execute() (UnpackResults, *_nethttp.Response, error) {
 	return r.ApiService.GetPrivateResultsExecute(r)
@@ -290,8 +291,8 @@ func (r ApiGetPrivateResultsRequest) Execute() (UnpackResults, *_nethttp.Respons
 func (a *UnpackingApiService) GetPrivateResults(ctx _context.Context, unpackId string) ApiGetPrivateResultsRequest {
 	return ApiGetPrivateResultsRequest{
 		ApiService: a,
-		ctx: ctx,
-		unpackId: unpackId,
+		ctx:        ctx,
+		unpackId:   unpackId,
 	}
 }
 
@@ -389,11 +390,10 @@ func (a *UnpackingApiService) GetPrivateResultsExecute(r ApiGetPrivateResultsReq
 }
 
 type ApiGetPrivateSearchbyHashRequest struct {
-	ctx _context.Context
+	ctx        _context.Context
 	ApiService *UnpackingApiService
 	sampleHash string
 }
-
 
 func (r ApiGetPrivateSearchbyHashRequest) Execute() (SearchResults, *_nethttp.Response, error) {
 	return r.ApiService.GetPrivateSearchbyHashExecute(r)
@@ -409,7 +409,7 @@ func (r ApiGetPrivateSearchbyHashRequest) Execute() (SearchResults, *_nethttp.Re
 func (a *UnpackingApiService) GetPrivateSearchbyHash(ctx _context.Context, sampleHash string) ApiGetPrivateSearchbyHashRequest {
 	return ApiGetPrivateSearchbyHashRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 		sampleHash: sampleHash,
 	}
 }
@@ -508,11 +508,10 @@ func (a *UnpackingApiService) GetPrivateSearchbyHashExecute(r ApiGetPrivateSearc
 }
 
 type ApiGetPrivateUnpackStatusRequest struct {
-	ctx _context.Context
+	ctx        _context.Context
 	ApiService *UnpackingApiService
-	unpackId string
+	unpackId   string
 }
-
 
 func (r ApiGetPrivateUnpackStatusRequest) Execute() (UnpackStatus, *_nethttp.Response, error) {
 	return r.ApiService.GetPrivateUnpackStatusExecute(r)
@@ -528,8 +527,8 @@ func (r ApiGetPrivateUnpackStatusRequest) Execute() (UnpackStatus, *_nethttp.Res
 func (a *UnpackingApiService) GetPrivateUnpackStatus(ctx _context.Context, unpackId string) ApiGetPrivateUnpackStatusRequest {
 	return ApiGetPrivateUnpackStatusRequest{
 		ApiService: a,
-		ctx: ctx,
-		unpackId: unpackId,
+		ctx:        ctx,
+		unpackId:   unpackId,
 	}
 }
 
@@ -627,10 +626,10 @@ func (a *UnpackingApiService) GetPrivateUnpackStatusExecute(r ApiGetPrivateUnpac
 }
 
 type ApiPostPrivateUploadRequest struct {
-	ctx _context.Context
+	ctx        _context.Context
 	ApiService *UnpackingApiService
-	private *bool
-	file **os.File
+	private    *bool
+	file       **os.File
 }
 
 func (r ApiPostPrivateUploadRequest) Private(private bool) ApiPostPrivateUploadRequest {
@@ -655,7 +654,7 @@ func (r ApiPostPrivateUploadRequest) Execute() (InlineResponse200, *_nethttp.Res
 func (a *UnpackingApiService) PostPrivateUpload(ctx _context.Context) ApiPostPrivateUploadRequest {
 	return ApiPostPrivateUploadRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
