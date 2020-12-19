@@ -17,7 +17,7 @@ import (
 // Section PE section
 type Section struct {
 	// Section characteristics
-	Characteristics int32 `json:"Characteristics"`
+	Characteristics int64 `json:"Characteristics"`
 	// Section entropy
 	Entropy float32 `json:"Entropy"`
 	// MD5 of section data
@@ -52,7 +52,7 @@ type Section struct {
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSection(characteristics int32, entropy float32, mD5 string, name string, nameHex string, numberOfLinenumbers int32, numberOfRelocations int32, pointerToLinenumbers int32, pointerToRawData int32, pointerToRelocations int32, sHA1 string, sHA256 string, sizeOfRawData int32, virtualAddress int32, virtualSize int32, ) *Section {
+func NewSection(characteristics int64, entropy float32, mD5 string, name string, nameHex string, numberOfLinenumbers int32, numberOfRelocations int32, pointerToLinenumbers int32, pointerToRawData int32, pointerToRelocations int32, sHA1 string, sHA256 string, sizeOfRawData int32, virtualAddress int32, virtualSize int32, ) *Section {
 	this := Section{}
 	this.Characteristics = characteristics
 	this.Entropy = entropy
@@ -81,9 +81,9 @@ func NewSectionWithDefaults() *Section {
 }
 
 // GetCharacteristics returns the Characteristics field value
-func (o *Section) GetCharacteristics() int32 {
+func (o *Section) GetCharacteristics() int64 {
 	if o == nil  {
-		var ret int32
+		var ret int64
 		return ret
 	}
 
@@ -92,7 +92,7 @@ func (o *Section) GetCharacteristics() int32 {
 
 // GetCharacteristicsOk returns a tuple with the Characteristics field value
 // and a boolean to check if the value has been set.
-func (o *Section) GetCharacteristicsOk() (*int32, bool) {
+func (o *Section) GetCharacteristicsOk() (*int64, bool) {
 	if o == nil  {
 		return nil, false
 	}
@@ -100,7 +100,7 @@ func (o *Section) GetCharacteristicsOk() (*int32, bool) {
 }
 
 // SetCharacteristics sets field value
-func (o *Section) SetCharacteristics(v int32) {
+func (o *Section) SetCharacteristics(v int64) {
 	o.Characteristics = v
 }
 

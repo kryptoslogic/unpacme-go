@@ -28,7 +28,7 @@ type ResultAllOfAnalysisMetadata struct {
 	// PE file entry point
 	EntryPoint *int32 `json:"Entry Point,omitempty"`
 	// PE file image base
-	ImageBase *int32 `json:"Image Base,omitempty"`
+	ImageBase *int64 `json:"Image Base,omitempty"`
 	// PE file linker version
 	LinkerVersion *string `json:"Linker Version,omitempty"`
 	// PE file program database file path
@@ -256,9 +256,9 @@ func (o *ResultAllOfAnalysisMetadata) SetEntryPoint(v int32) {
 }
 
 // GetImageBase returns the ImageBase field value if set, zero value otherwise.
-func (o *ResultAllOfAnalysisMetadata) GetImageBase() int32 {
+func (o *ResultAllOfAnalysisMetadata) GetImageBase() int64 {
 	if o == nil || o.ImageBase == nil {
-		var ret int32
+		var ret int64
 		return ret
 	}
 	return *o.ImageBase
@@ -266,7 +266,7 @@ func (o *ResultAllOfAnalysisMetadata) GetImageBase() int32 {
 
 // GetImageBaseOk returns a tuple with the ImageBase field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ResultAllOfAnalysisMetadata) GetImageBaseOk() (*int32, bool) {
+func (o *ResultAllOfAnalysisMetadata) GetImageBaseOk() (*int64, bool) {
 	if o == nil || o.ImageBase == nil {
 		return nil, false
 	}
@@ -283,7 +283,7 @@ func (o *ResultAllOfAnalysisMetadata) HasImageBase() bool {
 }
 
 // SetImageBase gets a reference to the given int32 and assigns it to the ImageBase field.
-func (o *ResultAllOfAnalysisMetadata) SetImageBase(v int32) {
+func (o *ResultAllOfAnalysisMetadata) SetImageBase(v int64) {
 	o.ImageBase = &v
 }
 

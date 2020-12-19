@@ -18,7 +18,7 @@ import (
 type UnpackResults struct {
 	// Unpack submission ID
 	Id string `json:"id"`
-	Status Status `json:"status"`
+	Status string `json:"status"`
 	// SHA256 hash of the submitted file
 	Sha256 string `json:"sha256"`
 	// Timestamp of original submission (in UTC)
@@ -35,7 +35,7 @@ type UnpackResults struct {
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUnpackResults(id string, status Status, sha256 string, time float32, results []Result, ) *UnpackResults {
+func NewUnpackResults(id string, status string, sha256 string, time float32, results []Result, ) *UnpackResults {
 	this := UnpackResults{}
 	this.Id = id
 	this.Status = status
@@ -78,9 +78,9 @@ func (o *UnpackResults) SetId(v string) {
 }
 
 // GetStatus returns the Status field value
-func (o *UnpackResults) GetStatus() Status {
+func (o *UnpackResults) GetStatus() string {
 	if o == nil  {
-		var ret Status
+		var ret string
 		return ret
 	}
 
@@ -89,7 +89,7 @@ func (o *UnpackResults) GetStatus() Status {
 
 // GetStatusOk returns a tuple with the Status field value
 // and a boolean to check if the value has been set.
-func (o *UnpackResults) GetStatusOk() (*Status, bool) {
+func (o *UnpackResults) GetStatusOk() (*string, bool) {
 	if o == nil  {
 		return nil, false
 	}
@@ -97,7 +97,7 @@ func (o *UnpackResults) GetStatusOk() (*Status, bool) {
 }
 
 // SetStatus sets field value
-func (o *UnpackResults) SetStatus(v Status) {
+func (o *UnpackResults) SetStatus(v string) {
 	o.Status = v
 }
 
